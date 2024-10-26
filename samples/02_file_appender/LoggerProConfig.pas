@@ -3,7 +3,8 @@ unit LoggerProConfig;
 interface
 
 uses
-  LoggerPro;
+  LoggerPro,
+  LoggerPro.Proxy;
 
 function Log: ILogWriter;
 
@@ -44,8 +45,20 @@ initialization
   #)
 }
 
-// Creates log in the ..\..\ folder without PID in the filename
-_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5, '..\..', [])]);
+// Creates logs in the ..\..\ folder without PID in the filename
+// The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
+_Log := BuildLogWriter([
+  TLoggerProFileAppender.Create(10, 5, '..\..', [],
+    TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
+    DEFAULT_LOG_FORMAT),
+
+  TLoggerProFilter.Build(
+    TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
+    function(ALogItem: TLogItem): boolean
+    begin
+      Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
+    end)
+  ]);
 // Create logs in the exe' same folder
 // _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
 
